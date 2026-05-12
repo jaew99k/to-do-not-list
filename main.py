@@ -12,6 +12,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Render 환경에서는 JSON 내용을 환경변수에서 직접 읽음
+GOOGLE_CLIENT_SECRET_JSON = os.getenv("GOOGLE_CLIENT_SECRET_JSON")
+if GOOGLE_CLIENT_SECRET_JSON:
+    with open("client_secret.json", "w") as f:
+        f.write(GOOGLE_CLIENT_SECRET_JSON)
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -19,7 +25,7 @@ templates = Jinja2Templates(directory="templates")
 UPSTAGE_API_KEY = os.getenv("UPSTAGE_API_KEY")
 CLIENT_SECRET_FILE = os.getenv("GOOGLE_CLIENT_SECRET_FILE")
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
-REDIRECT_URI = "http://localhost:8000/auth/callback"
+REDIRECT_URI = "https://to-do-not-list.onrender.com/auth/callback"
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
