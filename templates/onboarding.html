@@ -33,7 +33,7 @@
         .progress-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin: 0 16px 10px; flex-shrink: 0; }
         .progress-fill { height: 3px; background: linear-gradient(90deg, #a78bfa, #818cf8); border-radius: 2px; transition: width 0.4s ease; }
 
-        .day-strip { display: flex; gap: 6px; padding: 0 16px 10px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .day-strip { display: flex; gap: 6px; padding: 0 16px 10px; flex-shrink: 0; overflow-x: scroll; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; overscroll-behavior-x: contain; }
         .day-strip::-webkit-scrollbar { display: none; }
         .day-btn { flex: 1; border-radius: 10px; padding: 6px 4px; text-align: center; cursor: pointer; border: none; }
         .day-btn .short { font-size: 9px; margin-bottom: 3px; }
