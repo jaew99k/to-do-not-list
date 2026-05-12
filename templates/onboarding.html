@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do Not List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background: #0a0a0f; color: #f0f0f8; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .phone { width: 340px; background: #0a0a0f; border-radius: 40px; padding: 12px; box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 24px 60px rgba(0,0,0,0.6); }
+        .screen { background: #0f0f1a; border-radius: 30px; overflow: hidden; height: 720px; display: flex; flex-direction: column; }
+        #daily-screen, #profile-screen, #onboarding-screen, #loading-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 4px; color: rgba(255,255,255,0.4); font-size: 11px; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+        .scroll-area::-webkit-scrollbar { display: none; }
+        .bottom-nav { padding: 10px 20px 14px; display: flex; justify-content: space-around; border-top: 0.5px solid rgba(255,255,255,0.06); flex-shrink: 0; position: sticky; bottom: 0; background: #0f0f1a; z-index: 10; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; cursor: pointer; background: none; border: none; padding: 0; }
+        .nav-btn i { font-size: 18px; }
+        .card { background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; }
+        .hidden { display: none !important; }
+
+        .question-card { background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; }
+        .question-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; color: rgba(167,139,250,0.7); margin-bottom: 6px; }
+        .question-text { font-size: 13px; font-weight: 600; color: #e0e0f0; line-height: 1.4; margin-bottom: 10px; }
+        .option-btn { width: 100%; padding: 9px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); font-size: 12px; cursor: pointer; text-align: left; margin-bottom: 6px; transition: all 0.2s; }
+        .option-btn:hover { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.3); color: #c4b5fd; }
+        .option-btn.selected { background: rgba(167,139,250,0.15); border-color: rgba(167,139,250,0.4); color: #c4b5fd; }
+
+        .next-btn { width: 100%; padding: 11px; border-radius: 12px; background: rgba(167,139,250,0.2); border: 0.5px solid rgba(167,139,250,0.35); color: #c4b5fd; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .next-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .progress-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; margin: 0 16px 10px; flex-shrink: 0; }
+        .progress-fill { height: 3px; background: linear-gradient(90deg, #a78bfa, #818cf8); border-radius: 2px; transition: width 0.4s ease; }
+
+        .day-strip { display: flex; gap: 6px; padding: 0 16px 10px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .day-strip::-webkit-scrollbar { display: none; }
+        .day-btn { flex: 1; border-radius: 10px; padding: 6px 4px; text-align: center; cursor: pointer; border: none; }
+        .day-btn .short { font-size: 9px; margin-bottom: 3px; }
+        .day-btn .num { font-size: 12px; font-weight: 600; }
+
+        .todo-not-item { background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 13px; cursor: pointer; }
+        .todo-not-item.done { opacity: 0.5; }
+
+        .risk-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+        .check-box { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.15); background: transparent; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 1px; }
+        .check-box.checked { border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.25); }
+
+        .tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 3px; }
+
+        .gcal-bar { margin: 0 16px 10px; background: rgba(66,133,244,0.07); border: 0.5px solid rgba(66,133,244,0.2); border-radius: 10px; padding: 7px 11px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+        .focus-card { margin: 0 16px 10px; background: rgba(167,139,250,0.07); border: 0.5px solid rgba(167,139,250,0.18); border-radius: 12px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+        .tendency-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; }
+        .tendency-fill { height: 3px; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="screen">
+            <div class="status-bar">
+                <span>9:41</span>
+                <span style="display:flex;gap:4px;"><i class="ti ti-wifi" style="font-size:13px;"></i><i class="ti ti-battery" style="font-size:13px;"></i></span>
+            </div>
+
+            <!-- 온보딩 화면 -->
+            <div id="onboarding-screen">
+                <div style="padding:8px 20px 12px;">
+                    <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(167,139,250,0.6);margin-bottom:6px;">성향 분석</div>
+                    <div style="font-size:18px;font-weight:700;color:#f0f0f8;line-height:1.3;" id="onboarding-title">당신의 비효율 패턴을<br>알려주세요</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="q-progress" style="width:20%;"></div></div>
+                <div class="scroll-area" id="question-area"></div>
+            </div>
+
+            <!-- 로딩 화면 -->
+            <div id="loading-screen" class="hidden">
+                <div style="padding:8px 20px 12px;">
+                    <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(167,139,250,0.6);margin-bottom:6px;">AI 분석 중</div>
+                    <div style="font-size:18px;font-weight:700;color:#f0f0f8;line-height:1.3;">To-Do-Not을<br>만들고 있어요</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+                    <div class="spinner"></div>
+                    <div style="font-size:12px;color:rgba(255,255,255,0.4);">일정과 성향을 분석하고 있어요...</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.2);">Upstage Solar Pro 3</div>
+                </div>
+            </div>
+
+            <!-- 데일리 화면 -->
+            <div id="daily-screen" class="hidden"></div>
+
+            <!-- 프로필 화면 -->
+            <div id="profile-screen" class="hidden"></div>
+
+            <!-- Bottom Nav -->
+            <div class="bottom-nav">
+                <button class="nav-btn" style="color:rgba(255,255,255,0.2);" onclick="showTab('onboarding')" id="nav-onboarding"><i class="ti ti-brand-google"></i><span>연동</span></button>
+                <button class="nav-btn" style="color:rgba(255,255,255,0.2);" onclick="showTab('daily')" id="nav-daily"><i class="ti ti-calendar-event"></i><span>오늘</span></button>
+                <button class="nav-btn" style="color:rgba(255,255,255,0.2);" onclick="showTab('profile')" id="nav-profile"><i class="ti ti-user"></i><span>내 성향</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const events = {{ events | safe }};
+        const answers = {};
+        let currentQ = 0;
+
+        const questions = [
+            {
+                id: "q1", label: "질문 1/5",
+                text: "작업할 때 가장 시간을 많이 뺏기는 습관은?",
+                options: ["자료조사를 끝없이 함", "문장/표현을 계속 다듬음", "디자인/레이아웃에 집착", "계획을 반복해서 수정"]
+            },
+            {
+                id: "q2", label: "질문 2/5",
+                text: "마감 전에 반복하는 비효율적 행동은?",
+                options: ["처음부터 다시 쓰기", "완벽한 구조를 잡으려 함", "다른 사람 결과물과 비교", "사소한 디테일 수정"]
+            },
+            {
+                id: "q3", label: "질문 3/5",
+                text: "집중이 깨질 때 주로 하는 행동은?",
+                options: ["SNS/유튜브 확인", "다른 작업으로 전환", "계획표 다시 짜기", "새로운 도구/앱 탐색"]
+            },
+            {
+                id: "q4", label: "질문 4/5",
+                text: "완벽주의 성향이 가장 심한 영역은?",
+                options: ["글쓰기/문서 작성", "발표자료/PPT", "코딩/기술 구현", "일정 관리/계획"]
+            },
+            {
+                id: "q5", label: "질문 5/5",
+                text: "작업 시작 전 과도하게 준비하는 것은?",
+                options: ["레퍼런스/사례 수집", "도구/환경 세팅", "목차/구조 짜기", "관련 지식 공부"]
+            }
+        ];
+
+        function renderQuestion() {
+            const q = questions[currentQ];
+            const area = document.getElementById('question-area');
+            document.getElementById('q-progress').style.width = `${((currentQ + 1) / questions.length) * 100}%`;
+
+            area.innerHTML = `
+                <div class="question-card">
+                    <div class="question-label">${q.label}</div>
+                    <div class="question-text">${q.text}</div>
+                    ${q.options.map((opt, i) => `
+                        <button class="option-btn" onclick="selectOption('${q.id}', '${opt}', this)">
+                            ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+                <button class="next-btn" id="next-btn" disabled onclick="nextQuestion()">
+                    ${currentQ < questions.length - 1 ? '다음' : '<i class="ti ti-sparkles" style="font-size:14px;"></i> To-Do-Not 생성하기'}
+                </button>
+            `;
+        }
+
+        function selectOption(qId, value, btn) {
+            answers[qId] = value;
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        function nextQuestion() {
+            if (currentQ < questions.length - 1) {
+                currentQ++;
+                renderQuestion();
+            } else {
+                startAnalysis();
+            }
+        }
+
+        async function startAnalysis() {
+            document.getElementById('onboarding-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
+
+            const res = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ events, answers })
+            });
+            const data = await res.json();
+
+            document.getElementById('loading-screen').classList.add('hidden');
+            renderDaily(data.result);
+        }
+
+        function renderDaily(data) {
+            if (typeof data === 'string') {
+                const screen = document.getElementById('daily-screen');
+                screen.classList.remove('hidden');
+                screen.innerHTML = `<div class="scroll-area"><div style="font-size:12px;color:rgba(255,255,255,0.5);white-space:pre-wrap;">${data}</div></div>`;
+                return;
+            }
+
+            window.analysisData = data;
+
+            const days = data.days || {};
+            const dates = Object.keys(days).sort();
+            if (dates.length === 0) {
+                const screen = document.getElementById('daily-screen');
+                screen.classList.remove('hidden');
+                screen.innerHTML = `<div class="scroll-area"><div style="font-size:12px;color:rgba(255,255,255,0.5);">분석할 일정이 없습니다.</div></div>`;
+                return;
+            }
+
+            window.currentDateIdx = 0;
+            window.dates = dates;
+            window.checkedItems = {};
+
+            // 프로필 먼저 렌더링 (숨긴 상태에서)
+            renderProfile(data);
+
+            // 데일리 화면 표시 + 탭 활성화
+            document.getElementById('onboarding-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.add('hidden');
+            document.getElementById('profile-screen').classList.add('hidden');
+            document.getElementById('daily-screen').classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.style.color = 'rgba(255,255,255,0.2)');
+            document.getElementById('nav-daily').style.color = '#a78bfa';
+
+            renderDayView(dates[0]);
+        }
+
+        const SHORT_DAYS = ['일','월','화','수','목','금','토'];
+        const RISK_COLORS = {
+            red: { dot: '#f87171', glow: 'rgba(248,113,113,0.5)' },
+            orange: { dot: '#fb923c', glow: 'rgba(251,146,60,0.4)' },
+            purple: { dot: '#a78bfa', glow: 'rgba(167,139,250,0.4)' }
+        };
+        const DAY_RISK = {
+            high: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)', color: '#f87171' },
+            medium: { bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.18)', color: '#fb923c' },
+            low: { bg: 'rgba(167,139,250,0.07)', border: 'rgba(167,139,250,0.15)', color: '#a78bfa' }
+        };
+
+        function renderDayView(dateStr) {
+            const screen = document.getElementById('daily-screen');
+            const data = window.analysisData;
+            const days = data.days;
+            const day = days[dateStr];
+            const dates = window.dates;
+            const dt = new Date(dateStr);
+            const dayLabel = `${SHORT_DAYS[dt.getDay()]}요일`;
+            const dateLabel = `${dt.getMonth()+1}월 ${dt.getDate()}일`;
+
+            const items = day.items || [];
+            const checked = window.checkedItems[dateStr] || {};
+            const doneCount = Object.values(checked).filter(v => v).length;
+            const progress = items.length > 0 ? Math.round((doneCount / items.length) * 100) : 0;
+
+            const dayEvents = events.filter(ev => {
+                const startDate = (ev.start?.dateTime || ev.start?.date || '').slice(0, 10);
+                const endDateRaw = (ev.end?.dateTime || ev.end?.date || '').slice(0, 10);
+                // 구글 캘린더 종일 일정은 end.date가 마지막날+1일로 저장됨
+                const endDate = ev.end?.date
+                    ? new Date(new Date(endDateRaw) - 86400000).toISOString().slice(0, 10)
+                    : endDateRaw;
+                return startDate <= dateStr && dateStr <= endDate;
+            }).map(ev => ev.summary || '제목 없음');
+
+            screen.innerHTML = `
+                <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+                    <!-- 고정 영역 -->
+                    <div style="flex-shrink:0;">
+                        <div style="padding:6px 20px 10px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <button onclick="prevDay()" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.4);font-size:14px;"><i class="ti ti-chevron-left"></i></button>
+                                <div style="text-align:center;">
+                                    <div style="font-size:17px;font-weight:700;color:#f0f0f8;">${dayLabel}, ${dateLabel}</div>
+                                    <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px;min-height:16px;">
+                                        ${dayEvents.length > 0 
+                                            ? dayEvents.map(ev => `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4285f4;margin-right:4px;vertical-align:middle;"></span>${ev}`).join('  ·  ')
+                                            : '<span style="color:rgba(255,255,255,0.15);">일정 없음</span>'
+                                        }
+                                    </div>
+                                </div>
+                                <button onclick="nextDay()" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.4);font-size:14px;"><i class="ti ti-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="day-strip" id="day-strip">
+                            ${dates.map((d, i) => {
+                                const dd = new Date(d);
+                                const isActive = d === dateStr;
+                                const rc = DAY_RISK[days[d]?.riskLevel || 'low'];
+                                return `<button class="day-btn" id="day-btn-${d}" onclick="renderDayView('${d}')" style="min-width:52px;padding:8px 6px;background:${isActive ? 'rgba(167,139,250,0.15)' : rc.bg};border:${isActive ? '1px solid rgba(167,139,250,0.4)' : '0.5px solid '+rc.border};">
+                                    <div class="short" style="color:${isActive ? '#a78bfa' : 'rgba(255,255,255,0.3)'};">${SHORT_DAYS[dd.getDay()]}</div>
+                                    <div class="num" style="font-size:14px;color:${isActive ? '#c4b5fd' : rc.color};font-weight:${isActive ? 700 : 600};">${dd.getDate()}</div>
+                                </button>`;
+                            }).join('')}
+                        </div>
+
+                        <div class="gcal-bar">
+                            <div style="width:18px;height:18px;border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;">
+                                <span style="color:#4285f4;">G</span>
+                            </div>
+                            <span style="font-size:10.5px;color:rgba(66,133,244,0.9);flex:1;">Google Calendar 연동됨</span>
+                            <span style="font-size:9px;color:rgba(255,255,255,0.2);">방금 동기화</span>
+                        </div>
+
+                        <div class="focus-card">
+                            <div style="width:28px;height:28px;border-radius:8px;background:rgba(167,139,250,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="ti ti-target" style="font-size:14px;color:#a78bfa;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:10px;font-weight:500;letter-spacing:0.06em;color:rgba(167,139,250,0.7);margin-bottom:2px;">오늘의 핵심 목표</div>
+                                <div style="font-size:11.5px;color:rgba(255,255,255,0.55);line-height:1.45;">${day.focusGoal || ''}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin:0 16px 10px;">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:5px;">
+                                <span>오늘 차단 현황</span><span>${doneCount} / ${items.length} 완료</span>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px;">
+                                <div style="height:3px;background:linear-gradient(90deg,#a78bfa,#818cf8);border-radius:2px;width:${progress}%;transition:width 0.4s ease;"></div>
+                            </div>
+                        </div>
+
+                        <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(255,255,255,0.2);padding:0 20px;margin-bottom:8px;">오늘 하지 말아야 할 행동 · ${items.length}개</div>
+                    </div>
+
+                    <!-- 스크롤 영역 -->
+                    <div style="flex:1;overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:8px;scrollbar-width:none;">
+                        ${items.map((item, i) => {
+                            const rc = RISK_COLORS[item.risk] || RISK_COLORS.orange;
+                            const isDone = checked[i];
+                            return `<div class="todo-not-item ${isDone ? 'done' : ''}">
+                                <div style="display:flex;align-items:flex-start;gap:10px;">
+                                    <span class="risk-dot" style="background:${rc.dot};box-shadow:0 0 6px ${rc.glow};"></span>
+                                    <div style="flex:1;">
+                                        <div style="font-size:12.5px;font-weight:500;color:${isDone ? 'rgba(255,255,255,0.25)' : '#ddddf0'};line-height:1.35;text-decoration:${isDone ? 'line-through' : 'none'};">${item.action}</div>
+                                        ${!isDone ? `<div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.55;margin:7px 0 9px;">${item.reason}</div>
+                                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                                            <span class="tag" style="background:rgba(251,146,60,0.07);color:#fb923c;border:0.5px solid rgba(251,146,60,0.2);"><i class="ti ti-clock" style="font-size:10px;"></i>${item.timeLimit}</span>
+                                            <span class="tag" style="color:rgba(255,255,255,0.3);border:0.5px solid rgba(255,255,255,0.1);">→ ${item.instead}</span>
+                                        </div>` : ''}
+                                    </div>
+                                    <button class="check-box ${isDone ? 'checked' : ''}" onclick="toggleCheck('${dateStr}',${i})">
+                                        ${isDone ? '<i class="ti ti-check" style="font-size:11px;color:#a78bfa;"></i>' : ''}
+                                    </button>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            // 스크롤 위치 복원
+            const strip = document.getElementById('day-strip');
+            if (window.dayStripScroll !== undefined && strip) {
+                strip.scrollLeft = window.dayStripScroll;
+            }
+            // 현재 날짜 저장
+            window.currentDate = dateStr;
+            // 스크롤 위치 저장 이벤트
+            setTimeout(() => {
+                const strip = document.getElementById('day-strip');
+                if (strip) {
+                    strip.addEventListener('scroll', () => {
+                        window.dayStripScroll = strip.scrollLeft;
+                    });
+                }
+            }, 10);
+        }
+
+        function toggleCheck(dateStr, idx) {
+            if (!window.checkedItems[dateStr]) window.checkedItems[dateStr] = {};
+            window.checkedItems[dateStr][idx] = !window.checkedItems[dateStr][idx];
+            renderDayView(dateStr);
+        }
+
+        function prevDay() {
+            const idx = window.dates.indexOf(window.currentDate);
+            if (idx > 0) renderDayView(window.dates[idx - 1]);
+        }
+        function nextDay() {
+            const idx = window.dates.indexOf(window.currentDate);
+            if (idx < window.dates.length - 1) renderDayView(window.dates[idx + 1]);
+        }
+        function getCurrentDate() {
+            const strip = document.querySelector('.day-btn[style*="rgba(167,139,250"]');
+            return window.dates[0]; // fallback
+        }
+
+        function renderProfile(data) {
+            const screen = document.getElementById('profile-screen');
+            const tendencies = data.tendencies || [];
+            const praise = data.praise || [];
+            const stillWorking = data.still_working || [];
+            const score = data.weekly_score || 0;
+            const headline = data.weekly_headline || '';
+
+            screen.innerHTML = `
+                <div style="padding:8px 20px 12px;flex-shrink:0;">
+                    <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(167,139,250,0.6);margin-bottom:6px;">내 성향</div>
+                    <div style="font-size:18px;font-weight:700;color:#f0f0f8;line-height:1.3;">나의 비효율 패턴</div>
+                </div>
+                <div class="scroll-area">
+
+                    <!-- 유형 카드 -->
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:44px;height:44px;border-radius:14px;background:rgba(167,139,250,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="ti ti-user" style="font-size:20px;color:#a78bfa;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:#a78bfa;">${data.user_type || ''}</div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;line-height:1.4;">${data.user_type_desc || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 비효율 패턴 -->
+                    <div class="card">
+                        <div style="font-size:10px;font-weight:500;letter-spacing:0.07em;color:rgba(255,255,255,0.25);margin-bottom:10px;">주요 비효율 패턴</div>
+                        ${tendencies.map(t => `
+                            <div style="margin-bottom:9px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                    <span style="font-size:12px;font-weight:500;color:rgba(255,255,255,0.6);">${t.label}</span>
+                                    <span style="font-size:10px;color:rgba(255,255,255,0.25);">${t.desc}</span>
+                                </div>
+                                <div class="tendency-bar">
+                                    <div class="tendency-fill" style="background:${t.level >= 4 ? '#f87171' : t.level >= 3 ? '#fb923c' : '#a78bfa'};width:${(t.level/5)*100}%;"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- 성장 리포트 헤더 -->
+                    <div style="background:rgba(167,139,250,0.06);border:0.5px solid rgba(167,139,250,0.2);border-radius:14px;padding:12px 14px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div style="flex:1;">
+                                <div style="font-size:10px;font-weight:500;letter-spacing:0.07em;color:rgba(167,139,250,0.6);margin-bottom:4px;">이번 주 성장 리포트</div>
+                                <div style="font-size:13px;font-weight:600;color:#e8e8f8;line-height:1.4;">${headline}</div>
+                            </div>
+                            <div style="text-align:center;flex-shrink:0;margin-left:12px;">
+                                <div style="font-size:22px;font-weight:700;color:#a78bfa;">${score}</div>
+                                <div style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:1px;">실행 점수</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 칭찬 카드 -->
+                    ${praise.length > 0 ? `
+                        <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(255,255,255,0.2);padding-left:4px;">이번 주 잘할 수 있는 점 · ${praise.length}개</div>
+                        ${praise.map((h, idx) => `
+                            <div style="background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;padding:12px 13px;">
+                                <div style="display:flex;align-items:flex-start;gap:10px;">
+                                    <div style="width:30px;height:30px;border-radius:9px;background:${h.color}1a;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="ti ti-award" style="font-size:14px;color:${h.color};"></i>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <div style="font-size:12.5px;font-weight:600;color:#e0e0f0;line-height:1.35;margin-bottom:4px;">${h.title}</div>
+                                        <div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.55;">${h.body}</div>
+                                        <div style="background:${h.color}1a;border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:7px;margin-top:8px;">
+                                            <i class="ti ti-trending-up" style="font-size:13px;color:${h.color};flex-shrink:0;"></i>
+                                            <span style="font-size:11px;color:${h.color};font-weight:500;line-height:1.4;">${h.impact}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    ` : ''}
+
+                    <!-- 아직 개선 중 -->
+                    ${stillWorking.length > 0 ? `
+                        <div style="background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:14px;padding:12px 13px;">
+                            <div style="font-size:10px;font-weight:500;letter-spacing:0.07em;color:rgba(255,255,255,0.22);margin-bottom:10px;">아직 개선 중인 패턴</div>
+                            ${stillWorking.map(s => `
+                                <div style="margin-bottom:9px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                                        <span style="font-size:11px;color:rgba(255,255,255,0.4);">${s.label}</span>
+                                        <span style="font-size:10px;color:rgba(255,255,255,0.25);">${s.progress}%</span>
+                                    </div>
+                                    <div class="tendency-bar">
+                                        <div class="tendency-fill" style="background:rgba(251,146,60,0.5);width:${s.progress}%;"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                </div>
+            `;
+        }
+
+        function showTab(tab) {
+            ['onboarding','loading','daily','profile'].forEach(id => {
+                const el = document.getElementById(id + '-screen');
+                if (el) el.classList.add('hidden');
+            });
+            document.querySelectorAll('.nav-btn').forEach(b => b.style.color = 'rgba(255,255,255,0.2)');
+            const screen = document.getElementById(tab + '-screen');
+            if (screen) screen.classList.remove('hidden');
+            const nav = document.getElementById('nav-' + tab);
+            if (nav) nav.style.color = '#a78bfa';
+        }
+
+        // 시작
+        renderQuestion();
+        document.getElementById('nav-onboarding').style.color = '#a78bfa';
+    </script>
+</body>
+</html>

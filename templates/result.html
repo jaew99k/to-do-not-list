@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do Not List - 연동 완료</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+            background: #0a0a0f;
+            color: #f0f0f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .phone { width: 340px; background: #0a0a0f; border-radius: 40px; padding: 12px; box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 24px 60px rgba(0,0,0,0.6); }
+        .screen { background: #0f0f1a; border-radius: 30px; overflow: hidden; height: 720px; display: flex; flex-direction: column; }
+        .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 4px; color: rgba(255,255,255,0.4); font-size: 11px; }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+        .scroll-area::-webkit-scrollbar { display: none; }
+        .card { background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 14px; }
+        .event-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 12px; }
+        .event-dot { width: 8px; height: 8px; border-radius: 50%; background: #4285f4; flex-shrink: 0; }
+        .analyze-btn { width: 100%; padding: 12px; border-radius: 12px; background: rgba(167,139,250,0.2); border: 0.5px solid rgba(167,139,250,0.35); color: #c4b5fd; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .analyze-btn:hover { background: rgba(167,139,250,0.3); }
+        #result-area { margin-top: 10px; }
+        .result-item { background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 13px; margin-bottom: 8px; }
+        .result-item .action { font-size: 12.5px; font-weight: 500; color: #ddddf0; line-height: 1.35; }
+        .result-item .reason { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.55; margin-top: 5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #a78bfa; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="screen">
+            <div class="status-bar">
+                <span>9:41</span>
+                <span><i class="ti ti-wifi"></i> <i class="ti ti-battery"></i></span>
+            </div>
+
+            <div style="padding: 8px 20px 12px;">
+                <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(167,139,250,0.6);margin-bottom:6px;">캘린더 연동 완료</div>
+                <div style="font-size:18px;font-weight:700;color:#f0f0f8;line-height:1.3;">일정을 불러왔어요!</div>
+            </div>
+
+            <div class="scroll-area">
+                <!-- 연결 상태 -->
+                <div class="card" style="border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.05);">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;">
+                            <span style="color:#4285f4;">G</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:600;">Google Calendar</div>
+                            <div style="font-size:11px;color:#34d399;margin-top:2px;">✓ 연결됨</div>
+                        </div>
+                        <div style="width:24px;height:24px;border-radius:50%;background:rgba(52,211,153,0.2);display:flex;align-items:center;justify-content:center;">
+                            <i class="ti ti-check" style="font-size:13px;color:#34d399;"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 일정 목록 -->
+                <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(255,255,255,0.2);padding-left:2px;">불러온 일정</div>
+                <div id="events-list"></div>
+
+                <!-- 분석 버튼 -->
+                <button class="analyze-btn" id="analyze-btn" onclick="analyzeEvents()">
+                    <i class="ti ti-sparkles" style="font-size:14px;"></i>
+                    이 일정으로 To-Do-Not 생성하기
+                </button>
+
+                <!-- 로딩 -->
+                <div id="loading" class="hidden" style="text-align:center;padding:20px;">
+                    <div class="spinner"></div>
+                    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;">Upstage AI가 분석하고 있어요...</div>
+                </div>
+
+                <!-- 결과 -->
+                <div id="result-area"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const events = {{ events | safe }};
+
+        // 일정 표시
+        const listEl = document.getElementById('events-list');
+        events.forEach(ev => {
+            const title = ev.summary || '제목 없음';
+            const start = ev.start?.dateTime || ev.start?.date || '';
+            const date = new Date(start);
+            const dateStr = `${date.getMonth()+1}월 ${date.getDate()}일 ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+
+            listEl.innerHTML += `
+                <div class="event-item">
+                    <div class="event-dot"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;font-weight:500;color:#ddddf0;">${title}</div>
+                        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;">${dateStr}</div>
+                    </div>
+                    <i class="ti ti-check" style="font-size:13px;color:rgba(52,211,153,0.5);"></i>
+                </div>
+            `;
+        });
+
+        async function analyzeEvents() {
+            document.getElementById('analyze-btn').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            const res = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    events: events,
+                    answers: { note: "기본 분석" }
+                })
+            });
+            const data = await res.json();
+
+            document.getElementById('loading').classList.add('hidden');
+
+            const resultArea = document.getElementById('result-area');
+            const lines = data.result.split('\n').filter(l => l.trim());
+
+            resultArea.innerHTML = '<div style="font-size:10px;font-weight:500;letter-spacing:0.08em;color:rgba(255,255,255,0.2);padding-left:2px;margin-bottom:4px;">오늘 하지 말아야 할 행동</div>';
+
+            lines.forEach(line => {
+                if (line.trim()) {
+                    resultArea.innerHTML += `
+                        <div class="result-item">
+                            <div style="display:flex;align-items:flex-start;gap:10px;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:#f87171;box-shadow:0 0 6px rgba(248,113,113,0.5);flex-shrink:0;margin-top:5px;"></span>
+                                <div class="action">${line}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
