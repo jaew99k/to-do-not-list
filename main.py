@@ -122,7 +122,7 @@ async def analyze(request: Request):
    - 예: 목요일에 발표가 있으면, 화요일 항목에 "발표 준비를 내일로 미루지 않기"가 포함될 수 있음
    - 예: 수요일에 마감이 있으면, 월요일부터 "마감 전날 처음부터 다시 쓰지 않기 위해 오늘 초안 완성하기"가 반영될 수 있음
 4. 사용자의 성향(완벽주의, 계획중독 등)을 반드시 반영해서, 그 사람이 특히 빠지기 쉬운 함정을 짚어주세요.
-5. 각 날짜마다 2~4개의 항목을 생성하세요.
+5. 각 날짜마다 최소 3개 이상의 항목을 생성하세요.
 6. riskLevel은 해당 날짜의 일정 밀도와 마감 압박을 고려해서 high/medium/low로 설정하세요.
 
 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요:
@@ -173,7 +173,7 @@ async def analyze(request: Request):
                 "model": "solar-pro3",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7,
-                "max_tokens": 4000
+                "max_tokens": 8000
             },
             timeout=120
         )
