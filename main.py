@@ -175,7 +175,7 @@ async def analyze(request: Request):
                 "model": "solar-pro3",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7,
-                "max_tokens": 8000
+                "max_tokens": 16000
             },
             timeout=120
         )
