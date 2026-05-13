@@ -211,9 +211,13 @@
         }
 
         async function startAnalysis() {
-            document.getElementById('onboarding-screen').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('hidden');
-
+            ['onboarding-screen','daily-screen','profile-screen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            const loadingEl = document.getElementById('loading-screen');
+            loadingEl.classList.remove('hidden');
+            loadingEl.style.display = 'flex';
+            
             const res = await fetch('/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
