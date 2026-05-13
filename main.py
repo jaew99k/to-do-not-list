@@ -96,7 +96,9 @@ async def analyze(request: Request):
     events = body.get("events", [])
     answers = body.get("answers", {})
 
-    prompt = f"""당신은 사용자의 생산성을 방해하는 요소를 분석하는 전문가입니다.
+    prompt = f"""You are a productivity expert. Respond with valid JSON only. No explanation, no thinking out loud, no markdown. Start your response with {{ and end with }}.
+
+당신은 사용자의 생산성을 방해하는 요소를 분석하는 전문가입니다.
 
 아래는 사용자의 성향 분석 결과입니다:
 - 새로운 일을 시작할 때: {answers.get('q1', '없음')}
@@ -125,7 +127,7 @@ async def analyze(request: Request):
 5. 각 날짜마다 최소 3개 이상의 항목을 생성하세요.
 6. riskLevel은 해당 날짜의 일정 밀도와 마감 압박을 고려해서 high/medium/low로 설정하세요.
 
-반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요:
+반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요. 절대로 분석 과정이나 설명을 먼저 쓰지 마세요. 첫 글자는 반드시 {{ 이어야 합니다:
 {{
   "user_type": "사용자 유형 한마디 (예: 완벽주의 + 계획중독형)",
   "user_type_desc": "유형 설명 한 문장",
