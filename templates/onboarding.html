@@ -63,7 +63,7 @@
     <div class="phone">
         <div class="screen">
             <div class="status-bar">
-                <span>9:41</span>
+                <span id="status-time">9:41</span>
                 <span style="display:flex;gap:4px;"><i class="ti ti-wifi" style="font-size:13px;"></i><i class="ti ti-battery" style="font-size:13px;"></i></span>
             </div>
 
@@ -217,7 +217,7 @@
             const loadingEl = document.getElementById('loading-screen');
             loadingEl.classList.remove('hidden');
             loadingEl.style.display = 'flex';
-            
+
             const res = await fetch('/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -545,6 +545,15 @@
         // 시작
         renderQuestion();
         document.getElementById('nav-onboarding').style.color = '#a78bfa';
+    // 실시간 시계
+    function updateTime() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('status-time').textContent = `${h}:${m}`;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
     </script>
 </body>
 </html>
