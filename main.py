@@ -157,17 +157,22 @@ async def analyze(request: Request):
                       if (ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date") or "")[:10] <= d
                       and (ev.get("end", {}).get("dateTime") or ev.get("end", {}).get("date") or "")[:10] >= d]
 
-        # 오늘 이후 일정만 필터링
-        future_events = [ev.get("summary", "제목 없음") for ev in events
-                        if (ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date") or "")[:10] >= d]
+        # 오늘 이후 시작하는 일정만 필터링 (시작 날짜가 오늘 이후인 것만)
+        future_events = [
+            f"{(ev.get('start', {}).get('dateTime') or ev.get('start', {}).get('date') or '')[:10]}: {ev.get('summary', '제목 없음')}"
+            for ev in events
+            if (ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date") or "")[:10] >= d
+        ]
 
         day_prompt = f"""You are a productivity expert. Respond with valid JSON only. No explanation. Start with {{ and end with }}.
 
 사용자 유형: {profile.get('user_type', '')}
 사용자 성향: {profile.get('user_type_desc', '')}
-{d} 이후 남은 일정: {json.dumps(future_events, ensure_ascii=False)}
 오늘 날짜: {d}
 오늘 일정: {json.dumps(day_events, ensure_ascii=False)}
+{d} 이후 앞으로 남은 일정 (오늘 포함, 과거 일정 제외): {json.dumps(future_events, ensure_ascii=False)}
+
+[절대 규칙] {d} 이전에 시작한 일정은 절대 언급하지 마세요. 오직 {d} 이후의 일정만 참고하세요.
 
 [중요] 이것은 To-Do-Not List입니다. To-Do List가 아닙니다.
 - 오늘 해야 할 일을 알려주는 것이 아니라, 오늘 하면 안 되는 행동을 알려주는 것입니다.
