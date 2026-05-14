@@ -157,39 +157,47 @@ async def analyze(request: Request):
                       if (ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date") or "")[:10] <= d
                       and (ev.get("end", {}).get("dateTime") or ev.get("end", {}).get("date") or "")[:10] >= d]
 
+        # 오늘 이후 일정만 필터링
+        future_events = [ev.get("summary", "제목 없음") for ev in events
+                        if (ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date") or "")[:10] >= d]
+
         day_prompt = f"""You are a productivity expert. Respond with valid JSON only. No explanation. Start with {{ and end with }}.
 
 사용자 유형: {profile.get('user_type', '')}
 사용자 성향: {profile.get('user_type_desc', '')}
-이번 주 전체 일정: {json.dumps([ev.get('summary', '') for ev in events], ensure_ascii=False)}
+{d} 이후 남은 일정: {json.dumps(future_events, ensure_ascii=False)}
 오늘 날짜: {d}
 오늘 일정: {json.dumps(day_events, ensure_ascii=False)}
 
-위 정보를 바탕으로 {d}의 To-Do-Not을 만들어주세요.
-이번 주 전체 흐름을 고려해서 오늘 하지 말아야 할 행동 3개를 생성하세요.
+[중요] 이것은 To-Do-Not List입니다. To-Do List가 아닙니다.
+- 오늘 해야 할 일을 알려주는 것이 아니라, 오늘 하면 안 되는 행동을 알려주는 것입니다.
+- 예: "자료조사를 2시간 이상 하지 않기", "PPT 디자인에 집착하지 않기"
+- 절대로 "~하기", "~완성하기", "~준비하기" 같은 할 일 형태로 쓰지 마세요.
+- 반드시 "~하지 않기", "~하지 말기" 형태로 작성하세요.
+- 오늘 일정이 없어도 이후 일정을 고려해서 오늘 피해야 할 행동을 작성하세요.
 
 아래 JSON 형식으로만 응답하세요:
 {{
   "riskLevel": "high 또는 medium 또는 low",
-  "focusGoal": "오늘의 핵심 목표 한 줄",
+  "focusGoal": "오늘의 핵심 목표 한 줄 (이후 일정 흐름 반영)",
   "items": [
     {{
       "risk": "red 또는 orange 또는 purple",
-      "action": "하지 말아야 할 구체적인 행동",
-      "reason": "이유",
+      "action": "오늘 하지 말아야 할 구체적인 행동 (~하지 않기)",
+      "reason": "이유 (이후 일정과 연결해서 설명)",
       "timeLimit": "시간 제한 조건",
       "instead": "대신 해야 할 것"
     }},
     {{
       "risk": "orange",
-      "action": "두 번째 하지 말아야 할 행동",
+      "action": "두 번째 하지 말아야 할 행동 (~하지 않기)",
       "reason": "이유",
       "timeLimit": "시간 제한",
       "instead": "대신 할 것"
     }},
     {{
       "risk": "purple",
-      "action": "세 번째 하지 말아야 할 행동",
+      "action": "세 번째 하지 말아야 할 행동 (~하지 않기)",
       "reason": "이유",
       "timeLimit": "시간 제한",
       "instead": "대신 할 것"
