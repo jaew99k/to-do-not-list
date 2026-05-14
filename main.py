@@ -146,26 +146,10 @@ async def analyze(request: Request):
         profile = {"user_type": "분석형", "user_type_desc": "분석 중", "tendencies": [], "weekly_score": 70, "weekly_headline": "이번 주도 잘 해낼 수 있어요", "praise": [], "still_working": []}
 
     # 2단계: 날짜별 To-Do-Not 분석
-    # 날짜 목록 추출
-    date_set = set()
-    for ev in events:
-        start = (ev.get("start", {}).get("dateTime") or ev.get("start", {}).get("date") or "")[:10]
-        end_raw = (ev.get("end", {}).get("dateTime") or ev.get("end", {}).get("date") or "")[:10]
-        if start:
-            date_set.add(start)
-        # 여러 날짜에 걸친 일정 처리
-        if end_raw and end_raw > start:
-            from datetime import date as date_type, timedelta
-            try:
-                s = date_type.fromisoformat(start)
-                e = date_type.fromisoformat(end_raw) - timedelta(days=1)
-                while s <= e:
-                    date_set.add(s.isoformat())
-                    s += timedelta(days=1)
-            except:
-                pass
-
-    dates = sorted(date_set)
+    # 오늘부터 14일간 모든 날짜 생성
+    from datetime import date as date_type, timedelta
+    today = datetime.now(timezone.utc).date()
+    dates = [(today + timedelta(days=i)).isoformat() for i in range(14)]
 
     days = {}
     for d in dates:
